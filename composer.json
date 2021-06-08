@@ -1,0 +1,21 @@
+{
+    "name": "lolaslade/twitterapiclient",
+    "description": "A PHP client library for the Twitter API.",
+    "type": "library",
+    "require": {
+        "php": ">=7.3",
+        "guzzlehttp/guzzle": "^6.5"
+    },
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Lola Slade",
+            "email": "lola.slade@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "lolaslade\\twitterapiclient\\": "src/"
+        }
+    }
+}
