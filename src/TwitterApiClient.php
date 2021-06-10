@@ -28,36 +28,56 @@ class TwitterApiClient {
    */
   private array $request_options;
 
+  /**
+   * @var array
+   */
+  private array $get_fields;
+
   public function __construct(ClientInterface $client, $oauth_bearer_token, $base_url = TWITTER_API_V2_URL) {
     $this->client = $client;
     $this->oauth_bearer_token = $oauth_bearer_token;
     $this->base_url = $base_url;
     $this->request_options = ['connect_timeout' => 3];
     $this->request_options['headers'] = ["Authorization" => "Bearer {$this->oauth_bearer_token}"];
+    $this->get_fields = [];
   }
 
   /**
-   * Build the URL for Recent Tweet Search.
+   * Set an arbitrary field that will be used by the URL builder.
    *
-   * @param string $query
+   * @param string $key
+   * @param string $value
+   */
+  public function setGetField(string $key, string $value) {
+      $this->get_fields[$key] =  $value;
+  }
+
+  /**
+   * Build the Query array for Recent Tweet Search.
+   *
+   * @param string $query_params
    * @param string|null $fields
    * @param string|null $expansions
    * @param int $max_results
    *
-   * @return string
+   * @return array
    */
-  private function buildRecentTweetQueryUrl(string $query, string $fields = null,
-                                            string $expansions = null,
-                                            int $max_results = 25) : string {
-    $query = urlencode($query);
-    $url = "{$this->base_url}/tweets/search/recent?query={$query}";
+  private function buildTweetQuery(string $query, string $fields = null,
+                                   string $expansions = null,
+                                   int $max_results = 25) : array {
+    $query_params = [];
+    $query_params['query'] = $query;
     if (isset($expansions)) {
-      $url = $url . "&expansions=" . urlencode($expansions);
+      $query_params["expansions"] =  $expansions;
     }
     if (isset($fields)) {
-      $url = $url . "&tweet.fields=" . urlencode($fields);
+      $query_params["tweet.fields"] =  $fields;
     }
-    return $url . "&max_results=" . $max_results;
+    $query_params["max_results"] = $max_results;
+    foreach ($this->get_fields as $key => $value) {
+      $query_params[$key] = $value;
+    }
+    return $query_params;
   }
 
   /**
@@ -79,7 +99,9 @@ class TwitterApiClient {
   public function doRecentTweetSearch(string $query, string $fields = null,
                                       string $expansions = null,
                                       int $max_results = 25): string {
-    $url = $this->buildRecentTweetQueryUrl($query, $fields, $expansions, $max_results);
+    $query_params = $this->buildTweetQuery($query, $fields, $expansions, $max_results);
+    $this->request_options['query'] = $query_params;
+    $url = "{$this->base_url}/tweets/search/recent";
     $response = $this->client->request('GET', $url, $this->request_options);
     return $response->getBody();
   }
